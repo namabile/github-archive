@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+		<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+		<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+		<script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+		<script src="assets/d3.min.js" charset="utf-8"></script>
+		<style type="text/css">
+			body {
+				max-width: 960px;
+				margin-left: auto;
+				margin-right: auto;
+			}
+			
+			.axis path,
+			.axis line {
+  				fill: none;
+				stroke: #000;
+				shape-rendering: crispEdges;
+			}
+
+			.bar {
+				fill: steelblue;
+			}
+
+			.x.axis path {
+				display: none;
+			}
+
+			svg {
+				font-size: 10px;
+				border: 1px solid lightgray;
+			}
+			#time {
+				margin-top: -15px;
+				margin-bottom: 15px;
+			}
+		</style>
+	</head>
+	<body>
+		<script type="text/javascript">
+			var chart = barChart();
+			function barChart() {
+				// margin convention
+				var margin = {top: 20, right: 30, bottom: 30, left: 60},
+	    			width = 960 - margin.left - margin.right,
+	    			height = 500 - margin.top - margin.bottom,
+	    			x = d3.scale.ordinal().rangeRoundBands([0, width], .4),
+					y = d3.scale.linear().range([height, 0]),
+					xAxis = d3.svg.axis().scale(x).orient("bottom"),
+					yAxis = d3.svg.axis().scale(y).orient("left"),
+					yLabel = "Pushes";
+
+				function chart(selection) {
+					selection.each(function(data) {
+						var svg = d3.select(this).append("svg")
+						    .attr("width", width + margin.left + margin.right)
+						    .attr("height", height + margin.top + margin.bottom)
+						  .append("g")
+						    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+						x.domain(Object.keys(data));
+						y.domain([0, d3.max(d3.values(data))]);
+
+						svg.append("g")
+						  .attr("class", "x axis")
+						  .attr("transform", "translate(0," + height + ")")
+						  .call(xAxis);
+
+						svg.append("g")
+						  .attr("class", "y axis")
+						  .call(yAxis)
+						.append("text")
+						  .attr("transform", "rotate(-90)")
+						  .attr("y", 6)
+						  .attr("dy", ".71em")
+						  .style("text-anchor", "end")
+						  .text(yLabel);
+
+						svg.selectAll(".bar")
+						  .data(d3.values(data))
+						.enter().append("rect")
+						  .attr("class", "bar")
+						  .attr("x", function(d,i) { return x(i); })
+						  .attr("width", x.rangeBand())
+						  .attr("y", function(d) { return y(d); })
+						  .attr("height", function(d) { return height - y(d); });
+					});
+
+				}
+
+				chart.yLabel = function(label) {
+					yLabel = label;
+					return chart;
+				}
+
+				return chart;
+			}
+		</script>
+		<div class="page-header">
+			<h1>Harry's BI Analyst Project <small class="muted">Analysis and visualizations by <bold><a href="http://linkedin.com/in/namabile">Nick Amabile</a></bold></small></h1>
+		</div>
+		<div id="time" class="container"><h6>Created: Sep  2, 12:36 AM</h6></div>
+		<div class="row">
+			<div class="panel panel-default col-md-4">
+				<div class="panel-heading">Total Push Events Analyzed</div>
+				<div class="panel-body"><h3>736,099</h3></div> 
+			</div>
+			<div class="panel panel-default col-md-4">
+				<div class="panel-heading">Total Commits Analyzed</div>
+				<div class="panel-body"><h3>3,230,515</h3></div> 
+			</div>
+			<div class="panel panel-default col-md-4">
+				<div class="panel-heading">Total Repos Analyzed</div>
+				<div class="panel-body"><h3>128,281</h3></div>
+			</div>
+		</div>
+		
+			<div id="top-languages-by-push-count" class="container">
+				<div class="page-header"><h2>Top Languages By Push Count</h2></div>
+			</div>
+			<script type="text/javascript">
+				var topLanguagesByPushCount = {"JavaScript":148182,"Java":94978,"None":84020,"Ruby":72158,"Python":66085,"PHP":62848,"C++":42314,"C":39699,"Shell":21213,"Objective-C":16256,"C#":15961,"VimL":8197,"Perl":7637,"CoffeeScript":5030,"Scala":4947,"Emacs Lisp":4020,"Go":3704,"Lua":3232,"R":2440,"Other":33173};
+				
+					
+				
+				d3.select("#top-languages-by-push-count").datum(topLanguagesByPushCount)
+					.call(chart);
+			</script>
+		
+			<div id="top-languages-by-commits" class="container">
+				<div class="page-header"><h2>Top Languages By Commits</h2></div>
+			</div>
+			<script type="text/javascript">
+				var topLanguagesByCommits = {"C":465956,"Java":455620,"JavaScript":453009,"C++":419984,"Ruby":330827,"Python":275507,"PHP":268934,"None":176815,"Shell":65898,"C#":52322,"Objective-C":36625,"Scala":24330,"Perl":21751,"VimL":18063,"CoffeeScript":15118,"Emacs Lisp":11229,"Go":9798,"Lua":6895,"R":4497,"Other":117337};
+				 
+					
+					var commitChart = barChart().yLabel('Commits');
+				
+				d3.select("#top-languages-by-commits").datum(topLanguagesByCommits)
+					.call(commitChart);
+			</script>
+		
+			<div id="push-count-by-hour" class="container">
+				<div class="page-header"><h2>Push Count By Hour</h2></div>
+			</div>
+			<script type="text/javascript">
+				var pushCountByHour = {"0":23403,"1":25872,"2":27794,"10":36805,"11":36969,"12":38435,"13":40881,"14":39381,"15":35277,"16":30116,"17":25655,"18":24601,"19":24734,"20":24214,"3":26735,"21":22379,"22":22324,"23":23211,"4":27154,"5":30529,"6":34407,"7":37792,"8":39089,"9":38337};
+				
+					
+				
+				d3.select("#push-count-by-hour").datum(pushCountByHour)
+					.call(chart);
+			</script>
+		
+			<div id="push-count-by-weekday" class="container">
+				<div class="page-header"><h2>Push Count By Weekday</h2></div>
+			</div>
+			<script type="text/javascript">
+				var pushCountByWeekday = {"Monday":110994,"Tuesday":115723,"Wednesday":112577,"Thursday":112313,"Friday":106569,"Saturday":83013,"Sunday":94905};
+				
+					
+				
+				d3.select("#push-count-by-weekday").datum(pushCountByWeekday)
+					.call(chart);
+			</script>
+		
+		<div id="swear-data" class="container">
+			<div class="page-header">
+				<h2>Percent Of Commits With Swear Words</h2>
+			</div>
+			<script type="text/javascript">
+				var swearData = [{"label": "Commits with swear words", "value": 53569},
+					{"label": "Clean commits", "value": 3230515}];
+				var percentages = [0.02, 0.98];
+				var margin = {top: 20, right: 30, bottom: 30, left: 60},
+	    			width = 960 - margin.left - margin.right,
+	    			height = 500 - margin.top - margin.bottom,
+					color = d3.scale.category20c(),
+					radius = 200
+
+				var arc = d3.svg.arc()
+    				.outerRadius(radius - 10)
+    				.innerRadius(0);
+
+    			var pie = d3.layout.pie()
+    				.value(function(d,i) { return d.value; });
+
+
+				var svg = d3.select("#swear-data").append("svg")
+    				.attr("width", width + margin.left + margin.right)
+					.attr("height", height + margin.top + margin.bottom)
+  				  .append("g")
+    				.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+    			var g = svg.selectAll(".arc")
+      				.data(pie(swearData))
+    			  .enter().append("g")
+      				.attr("class", "arc");
+
+			    g.append("path")
+      				.attr("d", arc)
+      				.style("fill", function(d) { return color(d.data.label); });
+
+  				g.append("text")
+      				
+      				.attr("y", function(d,i){ return i==0 ? -205 : 225;})
+      				.attr("x", "0")
+      				.style("text-anchor", "middle")
+      				.text(function(d,i) {return d.data.label + ": " + percentages[i]*100 +"%";});
+			</script>
+		</div>
+	</body>
+</html>

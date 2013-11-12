@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+		<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+		<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+		<script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+		<script src="assets/d3.min.js" charset="utf-8"></script>
+		<style type="text/css">
+			body {
+				max-width: 960px;
+				margin-left: auto;
+				margin-right: auto;
+			}
+			
+			.axis path,
+			.axis line {
+  				fill: none;
+				stroke: #000;
+				shape-rendering: crispEdges;
+			}
+
+			.bar {
+				fill: steelblue;
+			}
+
+			.x.axis path {
+				display: none;
+			}
+
+			svg {
+				font-size: 10px;
+				border: 1px solid lightgray;
+			}
+			#time {
+				margin-top: -15px;
+				margin-bottom: 15px;
+			}
+		</style>
+	</head>
+	<body>
+		<script type="text/javascript">
+			var chart = barChart();
+			function barChart() {
+				// margin convention
+				var margin = {top: 20, right: 30, bottom: 30, left: 60},
+	    			width = 960 - margin.left - margin.right,
+	    			height = 500 - margin.top - margin.bottom,
+	    			x = d3.scale.ordinal().rangeRoundBands([0, width], .4),
+					y = d3.scale.linear().range([height, 0]),
+					xAxis = d3.svg.axis().scale(x).orient("bottom"),
+					yAxis = d3.svg.axis().scale(y).orient("left"),
+					yLabel = "Pushes";
+
+				function chart(selection) {
+					selection.each(function(data) {
+						var svg = d3.select(this).append("svg")
+						    .attr("width", width + margin.left + margin.right)
+						    .attr("height", height + margin.top + margin.bottom)
+						  .append("g")
+						    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+						x.domain(Object.keys(data));
+						y.domain([0, d3.max(d3.values(data))]);
+
+						svg.append("g")
+						  .attr("class", "x axis")
+						  .attr("transform", "translate(0," + height + ")")
+						  .call(xAxis);
+
+						svg.append("g")
+						  .attr("class", "y axis")
+						  .call(yAxis)
+						.append("text")
+						  .attr("transform", "rotate(-90)")
+						  .attr("y", 6)
+						  .attr("dy", ".71em")
+						  .style("text-anchor", "end")
+						  .text(yLabel);
+
+						svg.selectAll(".bar")
+						  .data(d3.values(data))
+						.enter().append("rect")
+						  .attr("class", "bar")
+						  .attr("x", function(d,i) { return x(i); })
+						  .attr("width", x.rangeBand())
+						  .attr("y", function(d) { return y(d); })
+						  .attr("height", function(d) { return height - y(d); });
+					});
+
+				}
+
+				chart.yLabel = function(label) {
+					yLabel = label;
+					return chart;
+				}
+
+				return chart;
+			}
+		</script>
+		<div class="page-header">
+			<h1>Harry's BI Analyst Project <small class="muted">Analysis and visualizations by <bold><a href="http://linkedin.com/in/namabile">Nick Amabile</a></bold></small></h1>
+		</div>
+		<div id="time" class="container"><h6>Created: <%= Time.now.localtime("-07:00").strftime("%b %e, %l:%M %p") %></h6></div>
+		<div class="row">
+			<div class="panel panel-default col-md-4">
+				<div class="panel-heading">Total Push Events Analyzed</div>
+				<div class="panel-body"><h3><%= helpers.number_with_delimiter(push_count) %></h3></div> 
+			</div>
+			<div class="panel panel-default col-md-4">
+				<div class="panel-heading">Total Commits Analyzed</div>
+				<div class="panel-body"><h3><%= helpers.number_with_delimiter(total_commits) %></h3></div> 
+			</div>
+			<div class="panel panel-default col-md-4">
+				<div class="panel-heading">Total Repos Analyzed</div>
+				<div class="panel-body"><h3><%= helpers.number_with_delimiter(unique_repos_with_push_events) %></h3></div>
+			</div>
+		</div>
+		<% bar_chart_metrics.each do |name| %>
+			<div id="<%= helpers.div_id(name) %>" class="container">
+				<div class="page-header"><h2><%= helpers.title(name) %></h2></div>
+			</div>
+			<script type="text/javascript">
+				var <%= helpers.camel_case(name) %> = <%= encoder.encode(eval(name)) %>;
+				<% if name.match("commit") %> 
+					<% chart_var = "commitChart" %>
+					<%= "var #{chart_var} = barChart().yLabel('Commits');" %>
+				<% else %>
+					<% chart_var = "chart" %>
+				<% end %>
+				d3.select("#<%= helpers.div_id(name) %>").datum(<%= helpers.camel_case(name) %>)
+					.call(<%= chart_var %>);
+			</script>
+		<% end %>
+		<div id="swear-data" class="container">
+			<div class="page-header">
+				<h2>Percent Of Commits With Swear Words</h2>
+			</div>
+			<script type="text/javascript">
+				var swearData = [{"label": "Commits with swear words", "value": <%= commits_with_swear_words %>},
+					{"label": "Clean commits", "value": <%= total_commits %>}];
+				var percentages = <%= swear_data %>;
+				var margin = {top: 20, right: 30, bottom: 30, left: 60},
+	    			width = 960 - margin.left - margin.right,
+	    			height = 500 - margin.top - margin.bottom,
+					color = d3.scale.category20c(),
+					radius = 200
+
+				var arc = d3.svg.arc()
+    				.outerRadius(radius - 10)
+    				.innerRadius(0);
+
+    			var pie = d3.layout.pie()
+    				.value(function(d,i) { return d.value; });
+
+
+				var svg = d3.select("#swear-data").append("svg")
+    				.attr("width", width + margin.left + margin.right)
+					.attr("height", height + margin.top + margin.bottom)
+  				  .append("g")
+    				.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+    			var g = svg.selectAll(".arc")
+      				.data(pie(swearData))
+    			  .enter().append("g")
+      				.attr("class", "arc");
+
+			    g.append("path")
+      				.attr("d", arc)
+      				.style("fill", function(d) { return color(d.data.label); });
+
+  				g.append("text")
+      				
+      				.attr("y", function(d,i){ return i==0 ? -205 : 225;})
+      				.attr("x", "0")
+      				.style("text-anchor", "middle")
+      				.text(function(d,i) {return d.data.label + ": " + percentages[i]*100 +"%";});
+			</script>
+		</div>
+	</body>
+</html>
